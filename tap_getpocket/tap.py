@@ -21,7 +21,6 @@ class TapGetPocket(Tap):
     """GetPocket tap class."""
     name = "tap-getpocket"
 
-    # TODO: Update this section with the actual config values you expect:
     config_jsonschema = th.PropertiesList(
         th.Property(
             "consumer_key",
@@ -33,6 +32,7 @@ class TapGetPocket(Tap):
             "start_date",
             th.DateTimeType,
             default='2010-01-01T00:00:00Z',
+            required=False,
             description="The earliest record date to sync"
         ),
     ).to_dict()
