@@ -11,14 +11,11 @@ plugins:
     - catalog
     - discover
     settings:
-    - name: username
-    - name: password
+    - name: consumer_key
+    - name: access_token
       kind: password
     - name: start_date
-      value: '2010-01-01T00:00:00Z'
+    - name: favorite
     config:
-      start_date: '2010-01-01T00:00:00Z'
-  loaders:
-  - name: target-jsonl
-    variant: andyh1203
-    pip_url: target-jsonl
+
+
