@@ -41,6 +41,13 @@ class TapGetPocket(Tap):
             required=False,
             description="The earliest record date to sync"
         ),
+        th.Property(
+            "favorite",
+            th.BooleanType,
+            default=None,
+            required=False,
+            description="Whether to retrieve only favorited, unforited or all items"
+        ),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
