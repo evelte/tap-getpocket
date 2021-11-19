@@ -17,7 +17,7 @@ from singer import utils
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.streams import RESTStream
 
-from tap_getpocket.auth import oau2Authenticator
+from tap_getpocket.auth import GetPocketAuthenticator
 
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
@@ -46,9 +46,9 @@ class GetPocketStream(RESTStream):
 
     @property
     @cached
-    def authenticator(self) -> oau2Authenticator:
+    def authenticator(self) -> GetPocketAuthenticator:
         """Return a new authenticator object."""
-        return oau2Authenticator.create_for_stream(self)
+        return GetPocketAuthenticator.create_for_stream(self)
 
     def wait(err=None):
         if isinstance(err, UserRateLimitExceeded):
