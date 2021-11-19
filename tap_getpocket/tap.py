@@ -29,6 +29,12 @@ class TapGetPocket(Tap):
             description="The consumer key used in the authentication flow"
         ),
         th.Property(
+            "access_token",
+            th.StringType,
+            required=True,
+            description="Access token to authenticate against the API service. Follow instructions in README to get"
+        ),
+        th.Property(
             "start_date",
             th.DateTimeType,
             default='2010-01-01T00:00:00Z',
