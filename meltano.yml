@@ -16,6 +16,7 @@ plugins:
       kind: password
     - name: start_date
     - name: favorite
+    - name: state
+    - name: detail_type
+    - name: tag
     config:
-
-
