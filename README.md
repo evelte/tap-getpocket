@@ -26,14 +26,16 @@ This tap is available on PyPi, sou you can go with option 1 entering `tap-getpoc
 If you want to use the git repository URL, enter `https://github.com/evelte/tap-getpocket`
 Alternatively, download the package from github and provide the local path into option 3.
 
-When promtped for capabilities and settings, enter the following:
+When prompted for capabilities and settings, enter the following:
 ```bash
 (capabilities) [[]]: catalog,discover,state
-(settings) [[]]: access_token:password,consumer_key:string,start_date:date_iso8601
+(settings) [[]]: access_token:password,consumer_key:string,start_date:date_iso8601,favorite:boolean,state:string,detail_type:string,tag:string
 ```
 
+See instructions on the configuration process [below](##Configuration).
+
 ### Running the Singer Tap without Meltano
-Create and activate a Python 3 virtual environment for the Tap, which we'll call tap-foo. When you run this yourself, change the tap name in the angle brackets < >
+Create and activate a Python 3 virtual environment for the tap (tap-getpocket)
 
 ```bash
 python3 -m venv ~/.virtualenvs/tap-getpocket
@@ -41,9 +43,14 @@ source ~/.virtualenvs/tap-getpocket/bin/activate
 # Install the Tap using pip:
 pip install tap-getpocket
 ```
-Edit the Tap's config file (config.json) to include any necessary credentials or parameters.
 
-Alternatively, add your settings on a CONFIG.json file. The file should look something like this:
+A full list of supported settings and capabilities for this tap is available by running:
+
+```bash
+tap-getpocket --about
+```
+
+Edit the Tap's config file (config.json) to include any necessary credentials or parameters. The file should look something like this:
 ```json
 {
   "consumer_key": "xxxyourconsumerkeyxxx",
@@ -81,7 +88,12 @@ There are 2 required config values to run this tap:
 * `consumer_key`
 * `access token`
 
-The available list of `consumer_key` can be seen [here](https://getpocket.com/developer/apps/), after logging into your 
+A full list of supported settings and capabilities for this tap is available by running:
+```bash
+meltano invoke tap-getpocket --about
+```
+
+You can see your list of existing `consumer_key`s [here](https://getpocket.com/developer/apps/), after logging into your 
 pocket account. You can use one of the available keys, or create a new one filling the form 
 [here](https://getpocket.com/developer/apps/new/)
 
@@ -90,22 +102,16 @@ in order to get your `access_token` to authenticate against the API service. You
 [here](https://github.com/evelte/tap-getpocket/blob/master/utils/authenticate.py).
 
 Optional settings to filter the results requested from the API include:
-* favorite
-* state
-* since
+* start_date (The earliest record date to sync. Default is '2021-01-01T00:00:00Z')
+* favorite (None, 0 or 1)
+* state (unread, read or all)
+* detail_type (basic or complete)
+* tag (tag_name or _untagged_ for only items without tag)
 
-A full list of supported settings and capabilities for this
-tap is available by running:
-
-```bash
-tap-getpocket --about
-```
-
-If you are using meltano you can add the settings directly on meltano.yml. You can see supported settings plus current values running:
+If you are using meltano you can add the settings directly on meltano.yml. You can see your current values running:
 ```bash
 meltano config tap-getpocket list
 ```
-
 
 ## Usage
 
