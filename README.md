@@ -6,6 +6,25 @@ Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
 
 ## Installation
 
+To install this tap, go to your meltano project folder. If you don't have a meltano project yet, create one following 
+the instructions [here](https://meltano.com/docs/getting-started.html#create-your-meltano-project).
+From within your project, you can now add your custom tap:
+```bash
+meltano add --custom extractor tap-getpocket
+```
+You will be prompted to choose between one of the following options:
+- PyPI package name:
+    tap-getpocket
+- Git repository URL:
+    git+https://gitlab.com/meltano/tap-getpocket.git
+- local directory, in editable/development mode:
+    -e extract/tap-getpocket
+
+This tap is available on PyPi, sou you can go with option 1 entering `tap-getpocket`.
+If you want to use the git repository URL, enter `https://github.com/evelte/tap-getpocket`
+Alternatively, download the package from github and provide the local path into option 3.
+
+
 - [ ] `Developer TODO:` Update the below as needed to correctly describe the install procedure. For instance, if you do 
 - not have a PyPi repo, or if you want users to directly install from your git repo, you can modify this step as 
 - appropriate.
