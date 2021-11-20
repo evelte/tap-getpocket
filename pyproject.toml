@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-getpocket"
-version = "0.0.1"
+version = "0.0.2"
 description = "`tap-getpocket` is a Singer tap for GetPocket, built with the Meltano SDK for Singer Taps."
 authors = ["Elena Velte"]
 keywords = [
