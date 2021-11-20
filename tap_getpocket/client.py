@@ -27,12 +27,18 @@ logger = logging.getLogger(__name__)
 
 
 class UserRateLimitExceeded(Exception):
+    """
+    Custom exception raised when user rate limit exceeded ('X-Limit-User-Remaining'<0)
+    """
     def __init__(self, response):
         logger.error(response.headers['X-Error'])
         self.response = response
 
 
 class KeyRateLimitExceeded(Exception):
+    """
+    Custom exception raised when user key rate limit exceeded ('X-Limit-Key-Remaining'<0)
+    """
     def __init__(self, response):
         logger.error(response.headers['X-Error'])
         self.response = response
