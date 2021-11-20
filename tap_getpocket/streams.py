@@ -1,16 +1,9 @@
 """Stream type classes for tap-getpocket."""
 
-from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable
-
 from singer_sdk import typing as th  # JSON Schema typing helpers
 
 from tap_getpocket.client import GetPocketStream
 
-# TODO: Delete this is if not using json files for schema definition
-SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
-# TODO: - Override `UsersStream` and `GroupsStream` with your own stream definition.
-#       - Copy-paste as many times as needed to create multiple stream types.
 
 class ContentStream(GetPocketStream):
     """Define custom stream."""
@@ -18,7 +11,7 @@ class ContentStream(GetPocketStream):
     path = "/./"
     primary_keys = ["item_id"]
     replication_key = "time_updated"
-    # Schemas solve the limited data types problem by providing more information about how to interpret JSON's basic types
+    # Schemas solve the limited data types problem providing more information about how to interpret JSON's basic types
     schema = th.PropertiesList(
         th.Property("item_id", th.StringType, required=True),
         th.Property("resolved_id", th.StringType),
