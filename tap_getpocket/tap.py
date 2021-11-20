@@ -34,7 +34,7 @@ class TapGetPocket(Tap):
         th.Property(
             "start_date",
             th.DateTimeType,
-            default='2010-01-01T00:00:00Z',
+            default='2021-01-01T00:00:00Z',
             required=False,
             description="The earliest record date to sync"
         ),
