@@ -6,9 +6,9 @@ Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
 
 ## Installation
 
-(If you are not running meltano, see the instructions below to run this singer tap) 
+(If you are not running Meltano, see the instructions below to run this singer tap) 
 
-To install this tap, go to your meltano project folder. If you don't have a meltano project yet, create one following 
+To install this tap, go to your Meltano project folder. If you don't have a Meltano project yet, create one following 
 the instructions [here](https://meltano.com/docs/getting-started.html#create-your-meltano-project).
 From within your project, you can now add your custom tap:
 ```bash
@@ -32,7 +32,7 @@ When prompted for capabilities and settings, enter the following:
 (settings) [[]]: access_token:password,consumer_key:string,start_date:date_iso8601,favorite:boolean,state:string,detail_type:string,tag:string
 ```
 
-See instructions on the configuration process [below](##Configuration).
+See instructions on the configuration process [below](#Configuration).
 
 ### Running the Singer Tap without Meltano
 Create and activate a Python 3 virtual environment for the tap (tap-getpocket)
@@ -108,7 +108,7 @@ Optional settings to filter the results requested from the API include:
 * detail_type (basic or complete)
 * tag (tag_name or _untagged_ for only items without tag)
 
-If you are using meltano you can add the settings directly on meltano.yml. You can see your current values running:
+If you are using Meltano you can add the settings directly on meltano.yml. You can see your current values running:
 ```bash
 meltano config tap-getpocket list
 ```
