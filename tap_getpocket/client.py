@@ -20,6 +20,8 @@ from tap_getpocket.auth import GetPocketAuthenticator
 
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
+TRUTHY = ("true", "1", "yes", "on")
+FALSEY = ("false", "0", "no", "off")
 STATE = {}
 
 logger = logging.getLogger(__name__)
@@ -124,9 +126,10 @@ class GetPocketStream(RESTStream):
         logger.debug("Response received successfully.")
         return response
 
-    def get_start(self):
+    def get_start(self) -> str:
         """
-
+        Get date threshold to extract data. If no state is available or state is prior to start_date from config, use
+        start date defined in config (by user or default)
         :return:
         """
         if self.replication_key not in STATE or (STATE[self.replication_key]) < self.config.get('start_date'):
@@ -143,18 +146,20 @@ class GetPocketStream(RESTStream):
         :return:
         """
 
-        if self.config.get('favorite') is None:
+        favorite = self.config.get('favorite')
+        if favorite is None:
             logger.info('Getting all items (favorited and un-favorited)')
-        elif self.config.get('favorite') == 1:
+        elif truthy(self.config.get('favorite')):
             logger.info('Only getting favorited items')
-        elif self.config.get('favorite') == 0:
+            favorite = 1
+        elif falsey(self.config.get('favorite')):
+            favorite = 0
             logger.info('Only getting un-favorited items')
         else:
             raise ValueError('Invalid value for "favorite" setting, should be 0, 1 or empty')
 
-        # not sure if this is the best place, but STATE needs to be updated
         if self.replication_key not in STATE:
-            # if this is available, use it
+            # get appropriate state to consider as threshold to extract new records
             if self.get_context_state(context).get('replication_key_value'):
                 STATE[self.replication_key] = self.get_context_state(context).get('replication_key_value')
             else:
@@ -163,32 +168,27 @@ class GetPocketStream(RESTStream):
             logger.info('self.replication_key: {}'.format(STATE[self.replication_key]))
 
         since = STATE[self.replication_key]
-        unix_since = unix_ts(since)
-        logger.info(since)
-        logger.info(unix_since)
+        logger.info('Considered threshold to extract records: {}'.format(since))
 
         """Return a dictionary of values to be used in URL parameterization."""
         # api does not support sorting by replication key. sorting from oldest to newest as recommended
         params: dict = {'sort': 'oldest',
-                        'since': unix_since
+                        'since': unix_ts(since),
+                        'favorite': favorite
                         }
 
         return params
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
-
-        # sort by ascending update date
-        # update date is not always available (for very old articles, must be a "new" feature)
-        # TODO: if update date is not available, always include
-        r = response.json()
-
         # TODO this is not documented on the api, but one request is limited to 5000 records.
         # so if metric record count = 5000 the pipeline should always run again (state will guarantee that missing
         # records are fetched
+        r = response.json()
 
+        # sort by ascending update date
         # the api only allows to sort by time_added, not by time_updated (the replication_key)
-        # TODO can not sort if update date  not available
+        # update date is not always available (for very old articles, must be a "new" feature) (consider 0 if not there)
         sort_index = sorted(r['list'], key=lambda x: (r['list'][x].get('time_updated', '0'),
                                                       r['list'][x].get('time_updated', '0'))
                             )
@@ -200,7 +200,7 @@ class GetPocketStream(RESTStream):
         # warning: state is datetime_str while time updated is unix timestamp
         logging.info(r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])))
         if r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])):
-            logging.info('first record is equal to state!')
+            logging.info('Removing duplicated record with update_date equal to state!')
             del r['list'][sort_index[0]]
 
         yield from extract_jsonpath(self.records_jsonpath, input=r)
@@ -229,14 +229,21 @@ def format_timestamp(data, schema):
     if data and isinstance(data, str) and data != '0' and schema.get('format') == 'date-time':
         utc_dt = datetime.datetime.utcfromtimestamp(int(data)).replace(tzinfo=pytz.UTC)
         result = utils.strftime(utc_dt)
-
     return result
 
 
-def unix_ts(datetime_str):
+def unix_ts(datetime_str: str) -> int:
     """
 
     :param datetime_str:
     :return:
     """
     return int(ciso8601.parse_datetime(datetime_str).timestamp())
+
+
+def truthy(val) -> bool:
+    return str(val).lower() in TRUTHY
+
+
+def falsey(val) -> bool:
+    return str(val).lower() in FALSEY
