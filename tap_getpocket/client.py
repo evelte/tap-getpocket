@@ -253,7 +253,7 @@ class GetPocketStream(RESTStream):
         """Parse the response and return an iterator of result rows."""
         # TODO this is not documented on the api, but one request is limited to 5000 records.
         # so if metric record count = 5000 the pipeline should always run again (STATE will guarantee that missing
-        # records are fetched
+        # records are fetched)
         r = response.json()
         if len(r['list']) == 0:
             logger.warning('No records found for current settings / state')
@@ -278,7 +278,12 @@ class GetPocketStream(RESTStream):
         yield from extract_jsonpath(self.records_jsonpath, input=r)
 
     def post_process(self, row: dict, context: Optional[dict]) -> dict:
-        """As needed, append or transform raw data to match expected structure."""
+        """
+        Convert date-time fields from unix to ISO time string
+        :param row:
+        :param context:
+        :return:
+        """
         if 'time_updated' not in row:
             row['time_updated'] = self.schema.get('properties').get('time_updated').get('default')
 
@@ -286,7 +291,6 @@ class GetPocketStream(RESTStream):
             formatted = format_timestamp(v, self.schema.get('properties').get(k))
             row[k] = formatted
             logging.debug('{} before: {}, after: {}'.format(k, v, formatted))
-
         return row
 
 
