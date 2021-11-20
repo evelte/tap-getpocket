@@ -6,6 +6,8 @@ Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
 
 ## Installation
 
+(If you are not running meltano, see the instructions below to run this singer tap) 
+
 To install this tap, go to your meltano project folder. If you don't have a meltano project yet, create one following 
 the instructions [here](https://meltano.com/docs/getting-started.html#create-your-meltano-project).
 From within your project, you can now add your custom tap:
@@ -29,6 +31,47 @@ When promtped for capabilities and settings, enter the following:
 (capabilities) [[]]: catalog,discover,state
 (settings) [[]]: access_token:password,consumer_key:string,start_date:date_iso8601
 ```
+
+### Running the Singer Tap without Meltano
+Create and activate a Python 3 virtual environment for the Tap, which we'll call tap-foo. When you run this yourself, change the tap name in the angle brackets < >
+
+```bash
+python3 -m venv ~/.virtualenvs/tap-getpocket
+source ~/.virtualenvs/tap-getpocket/bin/activate
+# Install the Tap using pip:
+pip install tap-getpocket
+```
+Edit the Tap's config file (config.json) to include any necessary credentials or parameters.
+
+Alternatively, add your settings on a CONFIG.json file. The file should look something like this:
+```json
+{
+  "consumer_key": "xxxyourconsumerkeyxxx",
+  "access_token": "xxxyouraccesstokenxxx",
+  "favorite": true
+}
+```
+
+This tap supports discovery mode, you can run it to obtain the catalog:
+
+```bash
+~/.virtualenvs/tap-getpocket/bin/tap-getpocket --config config.json --discover > catalog.json
+``` 
+Depending on what features the Tap supports, you may need to add metadata in the catalog for stream/field selection or replication-method.
+
+Run the Tap in sync mode:
+
+```bash
+~/.virtualenvs/tap-getpocket/bin/tap-getpocket --config config.json --catalog catalog.json
+```
+
+The output should consist of SCHEMA, RECORD, STATE, and METRIC messages.
+If you install a target, you can run the complete pipeline as follows:
+
+```bash
+~/.virtualenvs/tap-getpocket/bin/tap-getpocket | ~/.virtualenvs/target_jsonl/bin/target-jsonl --config config.json
+```
+
 
 ## Configuration
 
@@ -58,17 +101,7 @@ tap is available by running:
 tap-getpocket --about
 ```
 
-If you are using meltano you can add the settings directly on meltano.yml.
-Alternatively, add your settings on a CONFIG.json file. The file should look something like this:
-```json
-{
-  "consumer_key": "xxxyourconsumerkeyxxx",
-  "access_token": "xxxyouraccesstokenxxx",
-  "favorite": true
-}
-```
-
-If you are using meltano, you can see supported settings plus current values running:
+If you are using meltano you can add the settings directly on meltano.yml. You can see supported settings plus current values running:
 ```bash
 meltano config tap-getpocket list
 ```
