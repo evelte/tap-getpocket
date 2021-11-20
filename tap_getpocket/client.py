@@ -318,8 +318,20 @@ def unix_ts(datetime_str: str) -> int:
 
 
 def truthy(val) -> bool:
+    """
+    Convert user input that evaluates to True into boolean True, considering the following truthy values:
+    TRUTHY = ("true", "1", "yes", "on")
+    :param val:
+    :return:
+    """
     return str(val).lower() in TRUTHY
 
 
 def falsy(val) -> bool:
+    """
+    Convert user input that evaluates to False into boolean False, considering the following falsy values:
+    FALSY = ("false", "0", "no", "off")
+    :param val:
+    :return:
+    """
     return str(val).lower() in FALSY
