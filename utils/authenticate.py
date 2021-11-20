@@ -1,117 +1,99 @@
+"""
+this script runs the authentication flow to get the access_token needed to authenticate to the pocket API
+"""
+
+import sys
 import requests
-import os
-import pathlib
-import json
-import logging
 
 
-CONSUMER_KEY = '99548-b00cce06b8a12a1908537110'
 REDIRECT_URI = "http://www.google.com"
 
 HEADERS = {'Content-Type': 'application/json',
            "X-Accept": "application/json"}
 
-def get_request_token():
 
+def get_request_token(consumer_key):
+    """
+    requests access token from API based on provided consumer key
+    :param consumer_key: provided by user
+    :return: code to use to request access token for API authentication
+    """
     url = 'https://getpocket.com/v3/oauth/request'
-    json = {'consumer_key': CONSUMER_KEY,
+    json = {'consumer_key': consumer_key,
             'redirect_uri': REDIRECT_URI}
 
-    r = requests.post(url=url, json=json, headers=HEADERS)
-    data = r.json()
-    code = data['code']
-    print(r.status_code)
-    return code
-
-
-def authorize_app(code):
-
-    authorization_url = 'https://getpocket.com/auth/authorize?request_token={}&redirect_uri={}'.format(code,
-                                                                                                       REDIRECT_URI)
-
-    while True:
-        print(authorization_url)
-        input('press enter after authorizing')
-
-        url = 'https://getpocket.com/v3/oauth/authorize'
-        json = {'consumer_key': '99548-b00cce06b8a12a1908537110',
-                'code': code}
-
+    try:
         r = requests.post(url=url, json=json, headers=HEADERS)
-        print(r.status_code)
-        status_code = r.status_code
-
-        if status_code == 200:
-            break
-        elif status_code == 429:
-            print(r.headers)
-            # https://getpocket.com/developer/docs/rate-limits
-            print('Too many requests, exiting flow. Please try again later')
-            exit()
+        if r.status_code == 200:
+            code = r.json()['code']
         else:
-            print('Authorization was not successful, please try again')
-    data = r.json()
-    access_token = data['access_token']
-    return access_token
-
-
-def test_authentication(access_token):
-    # api-endpoint
-    URL = "https://getpocket.com/v3/get"
-    # defining a params dict for the parameters to be sent to the API
-    PARAMS = {'Content-Type': 'application/json',
-              'consumer_key': CONSUMER_KEY,
-              'access_token': access_token,
-              'count': 1}
-
-    # sending get request and saving the response as response object
-    r = requests.get(url=URL, params=PARAMS)
-    if r.status_code == 200:
-        return True
+            raise ValueError('Failed to request code. Status code {}'.format(r.status_code))
+    except Exception as err:
+        print(err)
+        raise RuntimeError('Could not get code, authentication flow failed')
     else:
-        return False
+        return code
 
 
-def run_authentication_flow():
-    code = get_request_token()
-    access_token = authorize_app(code)
-    return access_token
+def authorize_app(consumer_key, code):
+    """
+    Requests authorization from user via web link. After authorization requests access_token from API
+    :param consumer_key: key provided by user
+    :param code: code obtained on previous step
+    :return: access_token for API authentication
+    """
+    try:
+        auth_url = 'https://getpocket.com/auth/authorize?request_token={}&redirect_uri={}'.format(code, REDIRECT_URI)
+        while 'authorization not successful':
+            print(auth_url)
+            input('Open link above and press enter after authorizing')
 
+            url = 'https://getpocket.com/v3/oauth/authorize'
+            json = {'consumer_key': consumer_key,
+                    'code': code}
 
-def search_config_file(file_name='../.env'):
-    if os.path.exists(file_name) and pathlib.Path(file_name):
-        print('found config file')
-        with open(file_name, "r") as f:
-            keys = []
-            for line in f.readlines():
-                try:
-                    key, value = line.split('=')
-                    keys.append(key)
-                except ValueError:
-                    # syntax error
-                    pass
-        if 'TAP_GETPOCKET_ACCESS_TOKEN' in keys:
-            print('access token already available, doing nothing')
-            token_found = True
-        else:
-            token_found = False
-        return file_name, token_found
+            r = requests.post(url=url, json=json, headers=HEADERS)
+            status_code = r.status_code
+
+            if status_code == 200:
+                break
+            elif status_code == 429:
+                # https://getpocket.com/developer/docs/rate-limits
+                print('Too many requests, exiting flow. Please try again later')
+                exit()
+            else:
+                print('Authorization was not successful, please try again')
+        access_token = r.json()['access_token']
+    except Exception as err:
+        print(err)
+        raise RuntimeError('Could not get access token, authentication flow failed')
     else:
-        return None, None
+        print('Authentication flow concluded with success')
+        print('Your access token is: {}'.format(access_token))
+        return access_token
+
+
+def run_authentication_flow(consumer_key):
+    """
+    runs complete authentication flow, first getting code and then getting access token using code
+    :param consumer_key: provided by user
+    :return: access_token for API authentication
+    """
+    code = get_request_token(consumer_key)
+    access_token = authorize_app(consumer_key, code)
+    return access_token
 
 
 if __name__ == '__main__':
-    config_file, token_found = search_config_file()
-    if config_file and token_found:
-        print('nothing to do here')
+    args = sys.argv
+    if len(args) > 1:
+        your_consumer_key = args[1]
     else:
-        access_token = run_authentication_flow()
-        if not access_token:
-            raise RuntimeError('Authentication flow was not successful')
-        if config_file:
-            with open("../.env", "a", encoding='utf-8') as f:
-                f.write("TAP_GETPOCKET_ACCESS_TOKEN={}".format(access_token))
-        else:
-            with open("../.env", "w", encoding='utf-8') as f:
-                f.write("TAP_GETPOCKET_ACCESS_TOKEN={}".format(access_token))
-        print('config file updated ({})'.format(access_token))
+        your_consumer_key = None
+        print('Get or create your consumer key here: https://getpocket.com/developer/apps/')
+        while not your_consumer_key or your_consumer_key.strip() == '':
+            your_consumer_key = input('Please enter your key:')
+
+    your_access_token = run_authentication_flow(your_consumer_key)
+    print('you can set your environment variable using:')
+    print('export TAP_GETPOCKET_ACCESS_TOKEN={}'.format(your_access_token))
