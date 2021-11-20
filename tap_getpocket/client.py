@@ -21,7 +21,7 @@ from tap_getpocket.auth import GetPocketAuthenticator
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 TRUTHY = ("true", "1", "yes", "on")
-FALSEY = ("false", "0", "no", "off")
+FALSY = ("false", "0", "no", "off")
 STATE = {}
 
 logger = logging.getLogger(__name__)
@@ -128,13 +128,92 @@ class GetPocketStream(RESTStream):
 
     def get_start(self) -> str:
         """
-        Get date threshold to extract data. If no state is available or state is prior to start_date from config, use
+        Get date threshold to extract data. If no STATE is available or STATE is prior to start_date from config, use
         start date defined in config (by user or default)
         :return:
         """
         if self.replication_key not in STATE or (STATE[self.replication_key]) < self.config.get('start_date'):
             STATE[self.replication_key] = self.config.get('start_date')
         return STATE[self.replication_key]
+
+    def get_setting_favorite(self) -> Optional[int]:
+        """
+        Get favorite setting from config (or default), and do some basic validation
+        The valid values for the API are None, 0 and 1
+        If something goes wrong, all records are retrieved
+        :return:
+        """
+        favorite = self.config.get('favorite')
+        try:
+            if favorite is None:
+                logger.info('Getting all items (favorited and un-favorited)')
+            elif truthy(self.config.get('favorite')):
+                logger.info('Only getting favorited items')
+                favorite = 1
+            elif falsy(self.config.get('favorite')):
+                favorite = 0
+                logger.info('Only getting un-favorited items')
+            else:
+                raise ValueError('Invalid value for "favorite" setting, should be 0, 1 or empty')
+        except Exception as err:
+            logger.warning(err)
+            logger.warning('Invalid setting for "favorite", returning all records')
+            return None
+        else:
+            return favorite
+
+    def get_setting_state(self) -> str:
+        """
+        Get state setting from config (or default), and do some basic validation
+        The valid values for the API are 'all', 'unread' and 'archive'
+        If something goes wrong, all records are retrieved
+        :return:
+        """
+        state = self.config.get('state')
+        try:
+            if state is None:
+                logger.info('Getting all items (unread and archived)')
+            elif state.lower() == 'unread':
+                logger.info('Only getting unread items')
+                state = 'unread'
+            elif state.lower() in ('archive', 'archived', 'read'):
+                logger.info('Only getting archived items')
+                state = 'archive'
+            else:
+                raise ValueError('Invalid value for "state" setting, should be "all", "read" or "archive"')
+        except Exception as err:
+            logger.warning(err)
+            logger.warning('Invalid setting for "state", returning all records')
+            return 'all'
+        else:
+            return state
+
+    def get_setting_detail_type(self) -> str:
+        """
+        Get detail_type setting from config (or default), and do some basic validation
+        The valid values for the API are 'simple' (return basic info about each item) and 'complete' (return all data)
+        If something goes wrong, "complete" is used
+        :return:
+        """
+        detail_type = self.config.get('detail_type')
+        try:
+            if detail_type is None:
+                logger.info('Getting complete data from items')
+                detail_type = 'complete'
+            elif detail_type.lower() in ('basic', 'less'):
+                logger.info('Only getting basic info from data')
+                detail_type = 'basic'
+            elif detail_type.lower() in ('complete', 'more'):
+                logger.info('Getting full data from data')
+                detail_type = 'complete'
+            else:
+                raise ValueError('Invalid value for "datail_type" setting, should be "basic" or "complete"')
+        except Exception as err:
+            logger.warning(err)
+            logger.warning('Invalid setting for "detail_type", returning complete data from items')
+            return 'complete'
+        else:
+            return detail_type
 
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
@@ -146,20 +225,8 @@ class GetPocketStream(RESTStream):
         :return:
         """
 
-        favorite = self.config.get('favorite')
-        if favorite is None:
-            logger.info('Getting all items (favorited and un-favorited)')
-        elif truthy(self.config.get('favorite')):
-            logger.info('Only getting favorited items')
-            favorite = 1
-        elif falsey(self.config.get('favorite')):
-            favorite = 0
-            logger.info('Only getting un-favorited items')
-        else:
-            raise ValueError('Invalid value for "favorite" setting, should be 0, 1 or empty')
-
         if self.replication_key not in STATE:
-            # get appropriate state to consider as threshold to extract new records
+            # get appropriate STATE to consider as threshold to extract new records
             if self.get_context_state(context).get('replication_key_value'):
                 STATE[self.replication_key] = self.get_context_state(context).get('replication_key_value')
             else:
@@ -174,7 +241,9 @@ class GetPocketStream(RESTStream):
         # api does not support sorting by replication key. sorting from oldest to newest as recommended
         params: dict = {'sort': 'oldest',
                         'since': unix_ts(since),
-                        'favorite': favorite
+                        'favorite': self.get_setting_favorite(),
+                        'state': self.get_setting_state(),
+                        'detailType': self.get_setting_detail_type()
                         }
 
         return params
@@ -182,7 +251,7 @@ class GetPocketStream(RESTStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         # TODO this is not documented on the api, but one request is limited to 5000 records.
-        # so if metric record count = 5000 the pipeline should always run again (state will guarantee that missing
+        # so if metric record count = 5000 the pipeline should always run again (STATE will guarantee that missing
         # records are fetched
         r = response.json()
 
@@ -195,12 +264,11 @@ class GetPocketStream(RESTStream):
         index_map = {v: i for i, v in enumerate(sort_index)}
         r['list'] = dict(sorted(r['list'].items(), key=lambda pair: index_map[pair[0]]))
 
-        # the api parameter "since" is >=, ie it includes the last state (from the last record)
+        # the api parameter "since" is >=, ie it includes the last STATE (from the last record)
         # to avoid last article to duplicate, remove it time_updated == STATE
-        # warning: state is datetime_str while time updated is unix timestamp
-        logging.info(r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])))
+        # warning: STATE is datetime_str while time updated is unix timestamp
         if r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])):
-            logging.info('Removing duplicated record with update_date equal to state!')
+            logging.info('Removing duplicated record with update_date equal to STATE!')
             del r['list'][sort_index[0]]
 
         yield from extract_jsonpath(self.records_jsonpath, input=r)
@@ -245,5 +313,5 @@ def truthy(val) -> bool:
     return str(val).lower() in TRUTHY
 
 
-def falsey(val) -> bool:
-    return str(val).lower() in FALSEY
+def falsy(val) -> bool:
+    return str(val).lower() in FALSY
