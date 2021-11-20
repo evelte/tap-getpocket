@@ -4,7 +4,7 @@ In order to execute the script needs the consumer_key provided by the user. They
 argument. If no argument is provided, the script will prompt the user to insert one on execution
 
 The user can get his consumer key here: https://getpocket.com/developer/apps/
-Or create a new one here: https://getpocket.com/developer/apps/new
+Or create a new one here: https://getpocket.com/developer/apps/new/
 """
 
 import sys
