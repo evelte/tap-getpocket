@@ -2,12 +2,11 @@
 
 import requests
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Union, cast
+from typing import Any, Dict, Iterable, Optional, cast
 import logging
 import backoff
 import time
 import pytz
-from dateutil.parser import isoparse
 import datetime
 import ciso8601
 
@@ -57,6 +56,10 @@ class GetPocketStream(RESTStream):
         return GetPocketAuthenticator.create_for_stream(self)
 
     def wait(err=None):
+        """
+        used by @backoff to wait until rate reset
+        :return:
+        """
         if isinstance(err, UserRateLimitExceeded):
             delay = int(err.response.headers['X-Limit-User-Reset'])
             logging.info('waiting for {}s until reset'.format(delay))
@@ -122,6 +125,10 @@ class GetPocketStream(RESTStream):
         return response
 
     def get_start(self):
+        """
+
+        :return:
+        """
         if self.replication_key not in STATE or (STATE[self.replication_key]) < self.config.get('start_date'):
             STATE[self.replication_key] = self.config.get('start_date')
         return STATE[self.replication_key]
@@ -129,6 +136,12 @@ class GetPocketStream(RESTStream):
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
+        """
+
+        :param context:
+        :param next_page_token:
+        :return:
+        """
 
         if self.config.get('favorite') is None:
             logger.info('Getting all items (favorited and un-favorited)')
@@ -170,8 +183,8 @@ class GetPocketStream(RESTStream):
         # TODO: if update date is not available, always include
         r = response.json()
 
-        # TODO this is not docuented on the api, but one request is limited to 5000 records.
-        #  so if metric record count = 5000 the pipeline should alwas run again (state will guarantee that missing
+        # TODO this is not documented on the api, but one request is limited to 5000 records.
+        # so if metric record count = 5000 the pipeline should always run again (state will guarantee that missing
         # records are fetched
 
         # the api only allows to sort by time_added, not by time_updated (the replication_key)
@@ -198,21 +211,20 @@ class GetPocketStream(RESTStream):
             row['time_updated'] = self.schema.get('properties').get('time_updated').get('default')
 
         for k, v in row.items():
-            formatted = format_timestamp(v, type(v), self.schema.get('properties').get(k))
+            formatted = format_timestamp(v, self.schema.get('properties').get(k))
             row[k] = formatted
             logging.debug('{} before: {}, after: {}'.format(k, v, formatted))
 
         return row
 
 
-    def parse_datetime(datetime_str):
-        dt = isoparse(datetime_str)
-        if not dt.tzinfo:
-            dt = dt.replace(tzinfo=pytz.UTC)
-        return dt
+def format_timestamp(data, schema):
+    """
 
-
-def format_timestamp(data, typ, schema):
+    :param data:
+    :param schema:
+    :return:
+    """
     result = data
     if data and isinstance(data, str) and data != '0' and schema.get('format') == 'date-time':
         utc_dt = datetime.datetime.utcfromtimestamp(int(data)).replace(tzinfo=pytz.UTC)
@@ -220,5 +232,11 @@ def format_timestamp(data, typ, schema):
 
     return result
 
+
 def unix_ts(datetime_str):
+    """
+
+    :param datetime_str:
+    :return:
+    """
     return int(ciso8601.parse_datetime(datetime_str).timestamp())
