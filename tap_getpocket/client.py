@@ -207,7 +207,7 @@ class GetPocketStream(RESTStream):
                 logger.info('Getting full data from data')
                 detail_type = 'complete'
             else:
-                raise ValueError('Invalid value for "datail_type" setting, should be "basic" or "complete"')
+                raise ValueError('Invalid value for "detail_type" setting, should be "basic" or "complete"')
         except Exception as err:
             logger.warning(err)
             logger.warning('Invalid setting for "detail_type", returning complete data from items')
@@ -243,7 +243,8 @@ class GetPocketStream(RESTStream):
                         'since': unix_ts(since),
                         'favorite': self.get_setting_favorite(),
                         'state': self.get_setting_state(),
-                        'detailType': self.get_setting_detail_type()
+                        'detailType': self.get_setting_detail_type(),
+                        'tag': self.config.get('tag'),
                         }
 
         return params
@@ -254,22 +255,25 @@ class GetPocketStream(RESTStream):
         # so if metric record count = 5000 the pipeline should always run again (STATE will guarantee that missing
         # records are fetched
         r = response.json()
+        if len(r['list']) == 0:
+            logger.warning('No records found for current settings / state')
+        else:
+            # sort by ascending update date
+            # the api only allows to sort by time_added, not by time_updated (the replication_key)
+            # update date is not always available (for very old articles, must be a "new" feature)
+            # If update date is empty, consider 0
+            sort_index = sorted(r['list'], key=lambda x: (r['list'][x].get('time_updated', '0'),
+                                                          r['list'][x].get('time_updated', '0'))
+                                )
+            index_map = {v: i for i, v in enumerate(sort_index)}
+            r['list'] = dict(sorted(r['list'].items(), key=lambda pair: index_map[pair[0]]))
 
-        # sort by ascending update date
-        # the api only allows to sort by time_added, not by time_updated (the replication_key)
-        # update date is not always available (for very old articles, must be a "new" feature) (consider 0 if not there)
-        sort_index = sorted(r['list'], key=lambda x: (r['list'][x].get('time_updated', '0'),
-                                                      r['list'][x].get('time_updated', '0'))
-                            )
-        index_map = {v: i for i, v in enumerate(sort_index)}
-        r['list'] = dict(sorted(r['list'].items(), key=lambda pair: index_map[pair[0]]))
-
-        # the api parameter "since" is >=, ie it includes the last STATE (from the last record)
-        # to avoid last article to duplicate, remove it time_updated == STATE
-        # warning: STATE is datetime_str while time updated is unix timestamp
-        if r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])):
-            logging.info('Removing duplicated record with update_date equal to STATE!')
-            del r['list'][sort_index[0]]
+            # the api parameter "since" is >=, ie it includes the last STATE (from the last record)
+            # to avoid last article to duplicate, remove it time_updated == STATE
+            # warning: STATE is datetime_str while time updated is unix timestamp
+            if r['list'][sort_index[0]].get('time_updated', '0') == str(unix_ts(STATE[self.replication_key])):
+                logging.info('Removing duplicated record with update_date equal to STATE!')
+                del r['list'][sort_index[0]]
 
         yield from extract_jsonpath(self.records_jsonpath, input=r)
 
