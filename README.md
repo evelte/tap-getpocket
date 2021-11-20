@@ -24,13 +24,10 @@ This tap is available on PyPi, sou you can go with option 1 entering `tap-getpoc
 If you want to use the git repository URL, enter `https://github.com/evelte/tap-getpocket`
 Alternatively, download the package from github and provide the local path into option 3.
 
-
-- [ ] `Developer TODO:` Update the below as needed to correctly describe the install procedure. For instance, if you do 
-- not have a PyPi repo, or if you want users to directly install from your git repo, you can modify this step as 
-- appropriate.
-
+When promtped for capabilities and settings, enter the following:
 ```bash
-pipx install tap-getpocket
+(capabilities) [[]]: catalog,discover,state
+(settings) [[]]: access_token:password,consumer_key:string,start_date:date_iso8601
 ```
 
 ## Configuration
@@ -61,10 +58,21 @@ tap is available by running:
 tap-getpocket --about
 ```
 
-### Source Authentication and Authorization
+If you are using meltano you can add the settings directly on meltano.yml.
+Alternatively, add your settings on a CONFIG.json file. The file should look something like this:
+```json
+{
+  "consumer_key": "xxxyourconsumerkeyxxx",
+  "access_token": "xxxyouraccesstokenxxx",
+  "favorite": true
+}
+```
 
-- [ ] `Developer TODO:` If your tap requires special access on the source system, or any special authentication 
-- requirements, provide those here.
+If you are using meltano, you can see supported settings plus current values running:
+```bash
+meltano config tap-getpocket list
+```
+
 
 ## Usage
 
@@ -75,7 +83,7 @@ You can easily run `tap-getpocket` by itself or in a pipeline using [Meltano](ht
 ```bash
 tap-getpocket --version
 tap-getpocket --help
-tap-getpocket --config CONFIG --discover > ./catalog.json
+tap-getpocket --config config.json --discover > ./catalog.json
 ```
 
 ## Developer Resources
