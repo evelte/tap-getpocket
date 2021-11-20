@@ -100,5 +100,9 @@ if __name__ == '__main__':
             your_consumer_key = input('Please enter your key:')
 
     your_access_token = run_authentication_flow(your_consumer_key)
-    print('you can set your environment variable using:')
+
+    print('\nYou can set your environment variable using:')
     print('export TAP_GETPOCKET_ACCESS_TOKEN={}'.format(your_access_token))
+    print('\nOr add your credentials to your config.json file:')
+    json_content = '''"consumer_key": "{}", "access_token": "{}"'''.format(your_consumer_key, your_access_token)
+    print('{'+json_content+'}')
