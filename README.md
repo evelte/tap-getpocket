@@ -6,7 +6,9 @@ Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
 
 ## Installation
 
-- [ ] `Developer TODO:` Update the below as needed to correctly describe the install procedure. For instance, if you do not have a PyPi repo, or if you want users to directly install from your git repo, you can modify this step as appropriate.
+- [ ] `Developer TODO:` Update the below as needed to correctly describe the install procedure. For instance, if you do 
+- not have a PyPi repo, or if you want users to directly install from your git repo, you can modify this step as 
+- appropriate.
 
 ```bash
 pipx install tap-getpocket
@@ -16,7 +18,22 @@ pipx install tap-getpocket
 
 ### Accepted Config Options
 
-- [ ] `Developer TODO:` Provide a list of config options accepted by the tap.
+There are 2 required config values to run this tap:
+* `consumer_key`
+* `access token`
+
+The available list of `consumer_key` can be seen [here](https://getpocket.com/developer/apps/), after logging into your 
+pocket account. You can use one of the available keys, or create a new one filling the form 
+[here](https://getpocket.com/developer/apps/new/)
+
+After getting your consumer_key, you can use the authentication script provided in the package `utils/authenticate.py`
+in order to get your `access_token` to authenticate against the API service. You can also get the script 
+[here](https://github.com/evelte/tap-getpocket/blob/master/utils/authenticate.py).
+
+Optional settings to filter the results requested from the API include:
+* favorite
+* state
+* since
 
 A full list of supported settings and capabilities for this
 tap is available by running:
@@ -27,7 +44,8 @@ tap-getpocket --about
 
 ### Source Authentication and Authorization
 
-- [ ] `Developer TODO:` If your tap requires special access on the source system, or any special authentication requirements, provide those here.
+- [ ] `Developer TODO:` If your tap requires special access on the source system, or any special authentication 
+- requirements, provide those here.
 
 ## Usage
 
