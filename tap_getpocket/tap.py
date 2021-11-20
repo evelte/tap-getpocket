@@ -43,7 +43,28 @@ class TapGetPocket(Tap):
             th.BooleanType,
             default=None,
             required=False,
-            description="Whether to retrieve only favorited, unforited or all items"
+            description="Whether to retrieve only favorited, unfavorited or all items"
+        ),
+        th.Property(
+            "state",
+            th.StringType,
+            default='all',
+            required=False,
+            description="Whether to retrieve only unread, archived or all items"
+        ),
+        th.Property(
+            "detail_type",
+            th.StringType,
+            default='complete',
+            required=False,
+            description="Whether to retrieve only basic information or all data about each item"
+        ),
+        th.Property(
+            "tag",
+            th.StringType,
+            default=None,
+            required=False,
+            description="Only return items with this tag_name. Use _untagged_ to get only untagged items"
         ),
     ).to_dict()
 
