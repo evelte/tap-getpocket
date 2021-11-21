@@ -32,7 +32,7 @@ class ContentStream(GetPocketStream):
         th.Property("time_favorited", th.DateTimeType),
         th.Property("sort_id", th.IntegerType),
         th.Property("is_index", th.BooleanType),
-        th.Property("lang", th.StringType, default='elena'),
+        th.Property("lang", th.StringType),
         th.Property("listen_duration_estimate", th.IntegerType),
         th.Property("time_to_read", th.IntegerType),
         th.Property("amp_url", th.StringType),
