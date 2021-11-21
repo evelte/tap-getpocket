@@ -26,10 +26,21 @@ class ContentStream(GetPocketStream):
         th.Property("has_image", th.BooleanType),
         th.Property("has_video", th.BooleanType),
         th.Property("word_count", th.IntegerType),
+        th.Property("time_updated", th.DateTimeType),
+        th.Property("time_added", th.DateTimeType),
+        th.Property("time_read", th.DateTimeType),
+        th.Property("time_favorited", th.DateTimeType),
+        th.Property("sort_id", th.IntegerType),
+        th.Property("is_index", th.BooleanType),
+        th.Property("lang", th.StringType, default='elena'),
+        th.Property("listen_duration_estimate", th.IntegerType),
+        th.Property("time_to_read", th.IntegerType),
+        th.Property("amp_url", th.StringType),
+        th.Property("top_image_url", th.StringType),
         th.Property("tags",
                     th.ObjectType(
                         th.Property("item_id", th.IntegerType),
-                        th.Property("tag", th.IntegerType)
+                        th.Property("tag", th.StringType)
                     )),
         th.Property("authors",
                     th.ObjectType(
@@ -38,19 +49,6 @@ class ContentStream(GetPocketStream):
                         th.Property("name", th.StringType),
                         th.Property("url", th.StringType),
                     )),
-        th.Property("images", th.ObjectType()),
-        th.Property("videos", th.ObjectType()),
-        th.Property("time_updated", th.DateTimeType),
-        th.Property("time_added", th.DateTimeType),
-        th.Property("time_read", th.DateTimeType),
-        th.Property("time_favorited", th.DateTimeType),
-        th.Property("sort_id", th.IntegerType),
-        th.Property("is_index", th.BooleanType),
-        th.Property("lang", th.StringType),
-        th.Property("listen_duration_estimate", th.IntegerType),
-        th.Property("time_to_read", th.IntegerType),
-        th.Property("amp_url", th.StringType),
-        th.Property("top_image_url", th.StringType),
         th.Property("domain_metadata",
                     th.ObjectType(
                         th.Property("greyscale_logo", th.StringType),
@@ -58,4 +56,9 @@ class ContentStream(GetPocketStream):
                         th.Property("name", th.StringType),
                                 )
                     ),
+        th.Property("image",
+                    th.ObjectType()),
+        th.Property("images",
+                    th.ObjectType()),
+        th.Property("videos", th.ObjectType()),
     ).to_dict()
