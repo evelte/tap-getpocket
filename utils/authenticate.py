@@ -93,7 +93,9 @@ def run_authentication_flow(consumer_key):
 
 def find_consumer_key():
     consumer_key = os.environ.get('TAP_GETPOCKET_CONSUMER_KEY', None)
-    if not consumer_key:
+    if consumer_key:
+        print('Found consumer key in environment variables')
+    else:
         print('No consumer key found in environment variables')
         # check meltano.yml (assuming the script runs from the same path or from utils folder)
         config_file_paths = [os.path.join('..', 'meltano.yml'), 'meltano.yml']
