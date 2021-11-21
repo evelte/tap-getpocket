@@ -260,9 +260,6 @@ class GetPocketStream(RESTStream):
             logger.warning('No records found for current settings / state')
         else:
             # drop all records marked as "to be deleted" (status=2)
-            for k, v in r['list'].items():
-                logger.info(k)
-                logger.info(v)
             delete_index = [k for k, v in r['list'].items() if r['list'][k].get('status') == '2']
             logger.debug('Invalid records found to be deleted: {}'.format(delete_index))
             for del_key in delete_index:
