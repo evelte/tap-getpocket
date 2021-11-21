@@ -310,16 +310,21 @@ def format_type(value, schema):
     :return:
     """
     result = value
-    if result and isinstance(result, str) and result != '0' and schema.get('format') == 'date-time':
+    if result and isinstance(result, str) and schema.get('format') == 'date-time':
         # make sure date time fields are formatted as such
-        utc_dt = datetime.datetime.utcfromtimestamp(int(result)).replace(tzinfo=pytz.UTC)
-        result = utils.strftime(utc_dt)
+        if result != '0':
+            utc_dt = datetime.datetime.utcfromtimestamp(int(result)).replace(tzinfo=pytz.UTC)
+            result = utils.strftime(utc_dt)
+        else:
+            # date not available, return None
+            result = None
     if result and isinstance(result, str) and 'integer' in schema.get('type'):
         # make sure integer fields are formatted as such
         result = int(result)
-    if result and isinstance(result, str) and 'integer' in schema.get('type'):
-        # make sure integer fields are formatted as such
-        result = int(result)
+    if result and isinstance(result, str) and 'boolean' in schema.get('type'):
+        # make sure boolean fields are formatted as such
+        # string 0 is converted to True, so make sure we evaluate truthy here before
+        result = truthy(result)
     return result
 
 
