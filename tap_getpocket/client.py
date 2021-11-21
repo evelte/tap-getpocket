@@ -286,7 +286,8 @@ class GetPocketStream(RESTStream):
 
     def post_process(self, row: dict, context: Optional[dict]) -> dict:
         """
-        Convert date-time fields from unix to ISO time string
+        Convert fields into expected type according to schema
+        Replace missing values with default ones
         :param row:
         :param context:
         :return:
@@ -306,17 +307,21 @@ class GetPocketStream(RESTStream):
             logging.debug('{} before: {}, after: {}'.format(k, v, formatted))
 
         # if item not in row, use default value
-        try:
-            properties = self.schema.get('properties')
-            for prop in properties:
-                if prop not in row:
-                    logger.debug('Property {} not found in result'.format(prop))
-                    logger.debug('Using default value: {}'.format(properties.get(prop).get('default')))
-                    # if no default is defined, default value is None
+        properties = self.schema.get('properties')
+        for prop in properties:
+            if prop not in row:
+                logger.debug('Property {} not found in result'.format(prop))
+                logger.debug('Using default value: {}'.format(properties.get(prop).get('default')))
+                # if no default is defined, default value is None
+                try:
                     row[prop] = properties.get(prop).get('default')
-        except:
-            # if this fails, return original row
-            pass
+                except:
+                    # if something fails, use None as default
+                    row[prop] = None
+
+        # make sure all elements are in the expected order
+        index_map = {v: i for i, v in enumerate(list(properties.keys()))}
+        row = dict(sorted(row.items(), key=lambda pair: index_map[pair[0]]))
 
         return row
 
