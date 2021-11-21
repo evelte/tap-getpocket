@@ -204,7 +204,7 @@ class GetPocketStream(RESTStream):
                 logger.info('Only getting basic info from data')
                 detail_type = 'basic'
             elif detail_type.lower() in ('complete', 'more'):
-                logger.info('Getting full data from data')
+                logger.info('Getting full info from data')
                 detail_type = 'complete'
             else:
                 raise ValueError('Invalid value for "detail_type" setting, should be "basic" or "complete"')
