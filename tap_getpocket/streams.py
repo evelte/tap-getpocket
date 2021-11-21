@@ -40,7 +40,7 @@ class ContentStream(GetPocketStream):
                     )),
         th.Property("images", th.ObjectType()),
         th.Property("videos", th.ObjectType()),
-        th.Property("time_updated", th.DateTimeType, default='0'),
+        th.Property("time_updated", th.DateTimeType),
         th.Property("time_added", th.DateTimeType),
         th.Property("time_read", th.DateTimeType),
         th.Property("time_favorited", th.DateTimeType),
