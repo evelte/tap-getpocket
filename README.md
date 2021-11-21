@@ -92,13 +92,22 @@ If you already have an application, you can see your list of existing `consumer_
 [here](https://getpocket.com/developer/apps/), after logging into your pocket account. You can use one of the available 
 keys, or create a new one filling the form [here](https://getpocket.com/developer/apps/new/). Be sure to select the 
 "Retrieve" permission, which is the only one needed for this tap.
-After getting your key, make sure to add it to your `config.json`, environment variables or `meltano.yml`.
+After getting your key, make sure to add it to your environment variables or `meltano.yml`.
+For example to set your environment variable, run:
+
+```bash
+export TAP_GETPOCKET_CONSUMER_KEY=xxxy_yourconsumerkey_xxx
+```
 
 ### Get Access Token
 
 After getting your consumer_key, you can use the authentication script provided in the package `utils/authenticate.py`
 in order to get your `access_token` to authenticate against the API service. You can also get the script 
 [here](https://github.com/evelte/tap-getpocket/blob/master/utils/authenticate.py).
+You can use wget to get the script and run it locally from within your meltano project folder:
+```bash
+wget https://raw.githubusercontent.com/evelte/tap-getpocket/master/utils/authenticate.py
+```
 
 This script will use the consumer key provided by you directly as argument. If none provided, the script searches for
 it in the environment variables or in the `meltano.yml` file. The script assumes to be executed from whithin the utils
@@ -106,6 +115,11 @@ folder or alternatively from the root folder where the `meltano.yml` file is loc
 user will be prompted to insert one via `input()`.
 After concluding the authentication flow with success, the script returns the `access_code`, which should be added to 
 your environment variables or your config file.
+
+You should now be able to see your authentication credentials when running
+```bash
+meltano config tap-getpocket list
+```
 
 ## Configuration
 
@@ -136,6 +150,14 @@ meltano config tap-getpocket list
 ## Usage
 
 You can easily run `tap-getpocket` by itself or in a pipeline using [Meltano](https://meltano.com/).
+
+### Executing the Tap via Meltano
+
+By now you should be able to invoke the tap with all your settings from the previous steps:
+```bash
+meltano invoke tap-getpocket
+```
+
 
 ### Executing the Tap Directly
 
