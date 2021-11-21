@@ -7,7 +7,9 @@ The user can get his consumer key here: https://getpocket.com/developer/apps/
 Or create a new one here: https://getpocket.com/developer/apps/new/
 """
 
+import os
 import sys
+import yaml
 import requests
 
 
@@ -89,15 +91,42 @@ def run_authentication_flow(consumer_key):
     return access_token
 
 
+def find_consumer_key():
+    consumer_key = os.environ.get('TAP_GETPOCKET_CONSUMER_KEY', None)
+    if not consumer_key:
+        print('No consumer key found in environment variables')
+        # check meltano.yml (assuming the script runs from the same path or from utils folder)
+        config_file_paths = [os.path.join('..', 'meltano.yml'), 'meltano.yml']
+        for config_file in config_file_paths:
+            if os.path.exists(config_file):
+                with open(config_file) as file:
+                    try:
+                        extractors_config = yaml.load(file, Loader=yaml.FullLoader)['plugins']['extractors']
+                        this_tap = next((item for item in extractors_config if item['name'] == 'tap-getpocket'), None)
+                        consumer_key = this_tap.get('config', {}).get('consumer_key', None)
+                    except:
+                        print('No consumer key found in config file')
+                    else:
+                        if consumer_key:
+                            print('Found consumer key in config file: {}'.format(consumer_key))
+                            break
+    return consumer_key
+
+
 if __name__ == '__main__':
     args = sys.argv
     if len(args) > 1:
+        # consumer key can be provided as argument
         your_consumer_key = args[1]
+        print('Using argument as consumer key')
     else:
-        your_consumer_key = None
-        print('Get or create your consumer key here: https://getpocket.com/developer/apps/')
-        while not your_consumer_key or your_consumer_key.strip() == '':
-            your_consumer_key = input('Please enter your key:')
+        # check if consumer key is in environment variables or in meltano.yml
+        your_consumer_key = find_consumer_key()
+        if not your_consumer_key:
+            print('No consumer key found in setup')
+            print('Get or create your consumer key here: https://getpocket.com/developer/apps/')
+            while not your_consumer_key or your_consumer_key.strip() == '':
+                your_consumer_key = input('Please enter your key:')
 
     your_access_token = run_authentication_flow(your_consumer_key)
 
