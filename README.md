@@ -79,6 +79,33 @@ If you install a target, you can run the complete pipeline as follows:
 ~/.virtualenvs/tap-getpocket/bin/tap-getpocket | ~/.virtualenvs/target_jsonl/bin/target-jsonl --config config.json
 ```
 
+## Authentication
+
+Pocket does not closely follow the OAuth standard, and the user has to follow the following instructions **once** to 
+obtain an access toke for the API authentication.
+
+### Create a Pocket Application
+
+You need to create a Pocket application in Pocket’s developer portal to access your Pocket data. This app will only 
+visible to you and only serves the purpose of acquiring the credentials for the API.
+If you already have an application, you can see your list of existing `consumer_key`
+[here](https://getpocket.com/developer/apps/), after logging into your pocket account. You can use one of the available 
+keys, or create a new one filling the form [here](https://getpocket.com/developer/apps/new/). Be sure to select the 
+"Retrieve" permission, which is the only one needed for this tap.
+After getting your key, make sure to add it to your `config.json`, environment variables or `meltano.yml`.
+
+### Get Access Token
+
+After getting your consumer_key, you can use the authentication script provided in the package `utils/authenticate.py`
+in order to get your `access_token` to authenticate against the API service. You can also get the script 
+[here](https://github.com/evelte/tap-getpocket/blob/master/utils/authenticate.py).
+
+This script will use the consumer key provided by you directly as argument. If none provided, the script searches for
+it in the environment variables or in the `meltano.yml` file. The script assumes to be executed from whithin the utils
+folder or alternatively from the root folder where the `meltano.yml` file is located. If no consumer key is found, the 
+user will be prompted to insert one via `input()`.
+After concluding the authentication flow with success, the script returns the `access_code`, which should be added to 
+your environment variables or your config file.
 
 ## Configuration
 
@@ -88,18 +115,11 @@ There are 2 required config values to run this tap:
 * `consumer_key`
 * `access token`
 
-A full list of supported settings and capabilities for this tap is available by running:
+Both should be available after concluding the previous authentication [step](#Get-Access-Token). A full list of 
+supported settings and capabilities for this tap is available by running:
 ```bash
 meltano invoke tap-getpocket --about
 ```
-
-You can see your list of existing `consumer_key`s [here](https://getpocket.com/developer/apps/), after logging into your 
-pocket account. You can use one of the available keys, or create a new one filling the form 
-[here](https://getpocket.com/developer/apps/new/)
-
-After getting your consumer_key, you can use the authentication script provided in the package `utils/authenticate.py`
-in order to get your `access_token` to authenticate against the API service. You can also get the script 
-[here](https://github.com/evelte/tap-getpocket/blob/master/utils/authenticate.py).
 
 Optional settings to filter the results requested from the API include:
 * start_date (The earliest record date to sync. Default is '2021-01-01T00:00:00Z')
