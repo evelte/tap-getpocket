@@ -296,9 +296,28 @@ class GetPocketStream(RESTStream):
 
         for k, v in row.items():
             logger.debug('Processing {}'.format(k))
-            formatted = format_type(v, self.schema.get('properties').get(k))
-            row[k] = formatted
+            try:
+                formatted = format_type(v, self.schema.get('properties').get(k))
+            except:
+                # if this fails continue with original value
+                pass
+            else:
+                row[k] = formatted
             logging.debug('{} before: {}, after: {}'.format(k, v, formatted))
+
+        # if item not in row, use default value
+        try:
+            properties = self.schema.get('properties')
+            for prop in properties:
+                if prop not in row:
+                    logger.debug('Property {} not found in result'.format(prop))
+                    logger.debug('Using default value: {}'.format(properties.get(prop).get('default')))
+                    # if no default is defined, default value is None
+                    row[prop] = properties.get(prop).get('default')
+        except:
+            # if this fails, return original row
+            pass
+
         return row
 
 
