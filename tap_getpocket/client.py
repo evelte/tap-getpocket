@@ -255,9 +255,19 @@ class GetPocketStream(RESTStream):
         # so if metric record count = 5000 the pipeline should always run again (STATE will guarantee that missing
         # records are fetched)
         r = response.json()
+
         if len(r['list']) == 0:
             logger.warning('No records found for current settings / state')
         else:
+            # drop all records marked as "to be deleted" (status=2)
+            for k, v in r['list'].items():
+                logger.info(k)
+                logger.info(v)
+            delete_index = [k for k, v in r['list'].items() if r['list'][k].get('status') == '2']
+            logger.debug('Invalid records found to be deleted: {}'.format(delete_index))
+            for del_key in delete_index:
+                del r['list'][del_key]
+
             # sort by ascending update date
             # the api only allows to sort by time_added, not by time_updated (the replication_key)
             # update date is not always available (for very old articles, must be a "new" feature)
@@ -288,23 +298,31 @@ class GetPocketStream(RESTStream):
             row['time_updated'] = self.schema.get('properties').get('time_updated').get('default')
 
         for k, v in row.items():
-            formatted = format_timestamp(v, self.schema.get('properties').get(k))
+            logger.debug('Processing {}'.format(k))
+            formatted = format_type(v, self.schema.get('properties').get(k))
             row[k] = formatted
             logging.debug('{} before: {}, after: {}'.format(k, v, formatted))
         return row
 
 
-def format_timestamp(data, schema):
+def format_type(value, schema):
     """
 
-    :param data:
+    :param value:
     :param schema:
     :return:
     """
-    result = data
-    if data and isinstance(data, str) and data != '0' and schema.get('format') == 'date-time':
-        utc_dt = datetime.datetime.utcfromtimestamp(int(data)).replace(tzinfo=pytz.UTC)
+    result = value
+    if result and isinstance(result, str) and result != '0' and schema.get('format') == 'date-time':
+        # make sure date time fields are formatted as such
+        utc_dt = datetime.datetime.utcfromtimestamp(int(result)).replace(tzinfo=pytz.UTC)
         result = utils.strftime(utc_dt)
+    if result and isinstance(result, str) and 'integer' in schema.get('type'):
+        # make sure integer fields are formatted as such
+        result = int(result)
+    if result and isinstance(result, str) and 'integer' in schema.get('type'):
+        # make sure integer fields are formatted as such
+        result = int(result)
     return result
 
 
